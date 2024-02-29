@@ -19,6 +19,7 @@ add_executable(1
   windowsmanager.h windowsmanager.cpp
   record.h record.cpp
   recordrowwidget.h recordrowwidget.cpp
+  addrecord.h addrecord.cpp addrecord.ui
 )
 target_link_libraries(1 Qt${QT_VERSION_MAJOR}::Core)
 target_link_libraries(1 Qt${QT_VERSION_MAJOR}::Widgets)

@@ -6,6 +6,7 @@ WindowsManager::WindowsManager()
 {
     this->AuthW = new AuthWindow();
     this->MainW = new MainWindow();
+    this->AddW = new AddRecord();
 }
 
 WindowsManager* WindowsManager::get()

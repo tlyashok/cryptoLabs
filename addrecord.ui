@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AddRecord</class>
+ <widget class="QWidget" name="AddRecord">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="2" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QLabel" name="recordNameLabel">
+         <property name="text">
+          <string>Имя домена</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="userNameLabel">
+         <property name="text">
+          <string>Логин</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="passwordLabel">
+         <property name="text">
+          <string>Пароль</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QLineEdit" name="recordNameLineEdit"/>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="userNameLineEdit"/>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="passwordLineEdit"/>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

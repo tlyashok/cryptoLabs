@@ -6,7 +6,10 @@
 #include <QIODevice>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QMessageBox>
 #include <openssl/evp.h>
+
+#include "addrecord.h"
 
 class Record;
 
@@ -23,8 +26,16 @@ public:
     ~MainWindow();
     void showWindow();
 
+    void addRecord(Record rec);
+
 private slots:
     void removeRecord(Record* record);
+
+    void on_pushButton_clicked();
+
+    void on_lineEdit_textEdited(const QString &arg1);
+
+    void on_pushButton_2_clicked();
 
 private:
     QVector<Record> records;
@@ -39,7 +50,15 @@ private:
 
     void addRecordWidget(int index);
 
-    void populateListWidget();
+    void populateListWidget(QString search_name);
+
+    void saveToFile();
+
+    QString text_search;
+
+    QJsonObject toJson();
+
+    int encrypt_file(const QByteArray& in, QByteArray& out);
 
     Ui::MainWindow *ui;
 };
