@@ -11,7 +11,8 @@ public:
     WindowsManager();
     AuthWindow *AuthW;
     MainWindow *MainW;
-
+    static WindowsManager* w;
+    static WindowsManager* get();
     void start();
 };
 

@@ -17,6 +17,8 @@ add_executable(1
   mainwindow.h mainwindow.cpp mainwindow.ui
   authwindow.h authwindow.cpp authwindow.ui
   windowsmanager.h windowsmanager.cpp
+  record.h record.cpp
+  recordrowwidget.h recordrowwidget.cpp
 )
 target_link_libraries(1 Qt${QT_VERSION_MAJOR}::Core)
 target_link_libraries(1 Qt${QT_VERSION_MAJOR}::Widgets)
@@ -27,4 +29,11 @@ install(TARGETS 1
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+set(OPENSSL_ROOT_DIR "C:/Qt/Tools/OpenSSLv3/Win_x64")
+
+find_package(OpenSSL REQUIRED)
+
+include_directories(${OPENSSL_INCLUDE_DIR}) # Добавить путь к заголовочным файлам OpenSSL
+
+target_link_libraries(1 Qt${QT_VERSION_MAJOR}::Core OpenSSL::Crypto)
 

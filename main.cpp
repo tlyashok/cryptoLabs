@@ -4,7 +4,6 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    WindowsManager *w = new WindowsManager();
-    w->start();
+    WindowsManager::get()->start();
     return a.exec();
 }

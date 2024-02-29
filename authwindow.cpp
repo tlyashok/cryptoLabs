@@ -1,5 +1,6 @@
 #include "authwindow.h"
 #include "ui_authwindow.h"
+#include "windowsmanager.h"
 
 AuthWindow::AuthWindow(QWidget *parent) :
     QWidget(parent),
@@ -23,6 +24,7 @@ void AuthWindow::on_joinButton_clicked()
 {
     if (ui->lineEdit->text()=="123") {
         hide_window();
+        WindowsManager::get()->MainW->showWindow();
     } else {
         QMessageBox msgBox;
         msgBox.setText("Неверный пароль");

@@ -2,7 +2,7 @@
 #define AUTHWINDOW_H
 
 #include <QWidget>
-#include <QMessageBox>5
+#include <QMessageBox>
 
 namespace Ui {
 class AuthWindow;
