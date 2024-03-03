@@ -22,6 +22,19 @@ AuthWindow::~AuthWindow()
 
 void AuthWindow::on_joinButton_clicked()
 {
+    QByteArray hash = QCryptographicHash::hash(
+                ui->lineEdit->text().toUtf8(),
+                QCryptographicHash::Sha256
+    );
+    qDebug() << "sha256: " << hash;
+    ui->lineEdit->setText(QString().fill('*', ui->lineEdit->text().size()));
+    ui->lineEdit->clear();
+
+    hash.setRawData(
+                const_cast<const char*>( QByteArray().fill('*', 32).data()),
+                32
+    );
+
     if (ui->lineEdit->text()=="123") {
         hide_window();
         WindowsManager::get()->MainW->showWindow();
