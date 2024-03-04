@@ -18,6 +18,7 @@ public:
     void setData(Record *record);
     void accept();
     void create();
+    void edit();
 private slots:
     void changeEchoMode(QWidget *oldFocus, QWidget *newFocus);
     void on_buttonBox_accepted();
