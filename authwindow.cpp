@@ -7,7 +7,7 @@ AuthWindow::AuthWindow(QWidget *parent) :
     ui(new Ui::AuthWindow)
 {
     ui->setupUi(this);
-    this->show();
+    ask_load_code();
 }
 
 void AuthWindow::hide_window()
@@ -26,7 +26,21 @@ void AuthWindow::on_joinButton_clicked()
                 ui->lineEdit->text().toUtf8(),
                 QCryptographicHash::Sha256
     );
-    qDebug() << "sha256: " << hash;
+
+    if (WindowsManager::get()->MainW->tryDecrypt(hash)) {
+        QMessageBox msgBox;
+        msgBox.setText("Успешно");
+        msgBox.exec();
+        ui->lineEdit->setText("");
+        WindowsManager::get()->MainW->authComplete();
+        hide_window();
+    } else {
+        QMessageBox msgBox;
+        msgBox.setText("Неверный пароль");
+        msgBox.exec();
+        ui->lineEdit->setText("");
+    }
+
     ui->lineEdit->setText(QString().fill('*', ui->lineEdit->text().size()));
     ui->lineEdit->clear();
 
@@ -34,15 +48,43 @@ void AuthWindow::on_joinButton_clicked()
                 const_cast<const char*>( QByteArray().fill('*', 32).data()),
                 32
     );
+}
 
-    if (ui->lineEdit->text()=="123") {
-        hide_window();
-        WindowsManager::get()->MainW->showWindow();
-    } else {
-        QMessageBox msgBox;
-        msgBox.setText("Неверный пароль");
-        msgBox.exec();
-        ui->lineEdit->setText("");
-    }
+
+
+void AuthWindow::on_saveButton_clicked()
+{
+    QByteArray hash = QCryptographicHash::hash(
+        ui->lineEdit_2->text().toUtf8(),
+        QCryptographicHash::Sha256
+    );
+    WindowsManager::get()->MainW->saveToFile(hash);
+    WindowsManager::get()->MainW->tryDecrypt(hash);
+    WindowsManager::get()->MainW->authComplete();
+    hide_window();
+
+    QMessageBox mb;
+    mb.setText("Сохранено!");
+    mb.exec();
+
+    ui->lineEdit_2->setText(QString().fill('*', ui->lineEdit_2->text().size()));
+    ui->lineEdit_2->clear();
+
+    hash.setRawData(
+        const_cast<const char*>( QByteArray().fill('*', 32).data()),
+        32
+    );
+}
+
+void AuthWindow::ask_save_code()
+{
+    this->ui->stackedWidget->setCurrentIndex(1);
+    this->show();
+}
+
+void AuthWindow::ask_load_code()
+{
+    this->ui->stackedWidget->setCurrentIndex(0);
+    this->show();
 }
 

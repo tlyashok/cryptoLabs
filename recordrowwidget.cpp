@@ -1,10 +1,10 @@
-#include "recordrowwidget.h"
+ #include "recordrowwidget.h"
 
-RecordRowWidget::RecordRowWidget(Record* record, int index, QWidget* parent)
+RecordRowWidget::RecordRowWidget(Record* record, int index, QByteArray &pin_key, QWidget* parent)
     : QWidget(parent){
     this->record = record;
     numberLabel.setText(QString("%1").arg(index));
-    nameLabel.setText(record->recordName);
+    nameLabel.setText(record->getDatas(pin_key).recordName);
     removeButton.setText("X");
     numberLabel.setMaximumWidth(60);
     removeButton.setMaximumWidth(30);
@@ -22,6 +22,11 @@ void RecordRowWidget::updateText() {
 }
 
 RecordRowWidget::~RecordRowWidget() {}
+
+Record* RecordRowWidget::getRecord()
+{
+    return record;
+}
 
 void RecordRowWidget::on_removeButton_clicked() {
     emit removeRecord(record);

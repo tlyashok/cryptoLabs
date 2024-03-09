@@ -11,9 +11,10 @@
 class RecordRowWidget : public QWidget {
     Q_OBJECT
 public:
-    RecordRowWidget(Record* record, int index, QWidget* parent = nullptr);
+    RecordRowWidget(Record* record, int index, QByteArray &pin_key, QWidget* parent = nullptr);
     ~RecordRowWidget();
     void updateText();
+    Record* getRecord();
 private slots:
     void on_removeButton_clicked();
 signals:

@@ -4,6 +4,8 @@
 #include "recordrowwidget.h"
 #include "windowsmanager.h"
 
+bool DEBUG = 0;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -16,47 +18,88 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::showWindow()
+bool MainWindow::tryDecrypt(QByteArray &pin_key)
 {
-    this->show();
-    readFile();
-    resetView();
+    if (!readFile(pin_key)) {
+        return false;
+    } else {
+        WindowsManager::get()->AddW->addRecord(pin_key);
+        if (WindowsManager::get()->AddW->isEditNow == false) {
+            resetView(pin_key);
+        }
+        this->show();
+        if (WindowsManager::get()->AddW->isEditNow == true) {
+            WindowsManager::get()->AddW->show();
+        }
+        WindowsManager::get()->AddW->isEditNow = false;
+        return true;
+    }
 }
 
-void MainWindow::readFile() {
+bool MainWindow::readFile(QByteArray &pin_key) {
     QFile file("records.json");
     if (!file.open(QIODevice::ReadOnly)) {
         qDebug() << file.errorString();
-        return;
+        return false;
     }
     QByteArray hexEncData = file.readAll();
     QByteArray encData = QByteArray::fromHex(hexEncData);
     QByteArray unEncData;
-    int errorcode = decrypt_file(encData, unEncData);
+    int errorcode = decrypt_file(encData, unEncData, pin_key);
     if (errorcode) {
         qDebug() << "Error when decrypting! Errorcode: " << errorcode;
-        return;
+        return false;
     }
-    QJsonDocument data = QJsonDocument::fromJson(unEncData);
-    fromJson(data.object());
+    try {
+        QJsonDocument data = QJsonDocument::fromJson(unEncData);
+        fromJson(data.object(), pin_key);
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
-void MainWindow::fromJson(QJsonObject json) {
-    if (!json.contains("records") || !json["records"].isArray())
+void MainWindow::saveToFile(QByteArray& pin_key) {
+    QFile file("records.json");
+    if (!file.open(QIODevice::WriteOnly)) {
+        qDebug() << file.errorString();
         return;
-    QJsonArray jsonRecords = json["records"].toArray();
+    }
+    QByteArray unEncData = QJsonDocument(this->toJson(pin_key)).toJson();
+    QByteArray encData;
+    int errorcode = encrypt_file(unEncData, encData, pin_key);
+    if (errorcode) {
+        qDebug() << "Error when encrypting! Errorcode: " << errorcode;
+        return;
+    }
+    QByteArray hexEncData = encData.toHex();
+    file.write(hexEncData);
+    file.close();
+}
+
+bool MainWindow::fromJson(QJsonObject json, QByteArray &pin_key) {
     records.clear();
+    if (!json.contains("records") || !json["records"].isArray())
+        return false;
+    QJsonArray jsonRecords = json["records"].toArray();
     for (int i = 0; i < jsonRecords.size(); i++) {
-        Record r;
-        r.recordName = jsonRecords[i].toObject()["recordName"].toString();
-        r.userName = jsonRecords[i].toObject()["userName"].toString();
-        r.password = jsonRecords[i].toObject()["password"].toString();
+        Record r(
+            jsonRecords[i].toObject()["recordName"].toString().toUtf8(),
+            jsonRecords[i].toObject()["userName"].toString().toUtf8(),
+            jsonRecords[i].toObject()["password"].toString().toUtf8(),
+            pin_key
+        );
         records.append(r);
     }
+    return true;
 }
 
-int MainWindow::decrypt_file(const QByteArray& in, QByteArray& out) {
-    QByteArray key_qba = QByteArray::fromHex("ebbc302ee102a698092424f16221330da793ddc2ffb24ad0ff88cff7bc4e4324");
+int MainWindow::decrypt_file(const QByteArray& in, QByteArray& out, QByteArray& pin_key) {
+    if (DEBUG) {
+        out = in;
+        return 0;
+    }
+    QByteArray key_qba = pin_key;
     QByteArray iv_qba = QByteArray::fromHex("1be1e6411665696b56e284a50deb15bb");
     QDataStream encryptedStream(in);
     QDataStream decryptedStream(&out, QIODevice::ReadWrite);
@@ -93,9 +136,9 @@ int MainWindow::decrypt_file(const QByteArray& in, QByteArray& out) {
     return 0;
 }
 
-void MainWindow::resetView() {
+void MainWindow::resetView(QByteArray &pin_key) {
     ui->listWidget->clear();
-    populateListWidget(text_search);
+    populateListWidget(text_search, pin_key);
 }
 
 void MainWindow::removeRecord(Record* record) {
@@ -106,14 +149,17 @@ void MainWindow::removeRecord(Record* record) {
             break;
         }
     if (index != -1) {
-        records.remove(index);
-        resetView();
+        qDebug() << "succesful delete\n";
+        qDebug() << records.size();
+        records.removeAt(index);
+        qDebug() << records.size();
+        WindowsManager::get()->AuthW->ask_save_code();
     }
 }
 
-void MainWindow::addRecordWidget(int index) {
+void MainWindow::addRecordWidget(int index, QByteArray &pin_key) {
     Record* record = &(records[index]);
-    RecordRowWidget* row = new RecordRowWidget(record, index, this->ui->listWidget);
+    RecordRowWidget* row = new RecordRowWidget(record, index, pin_key, this->ui->listWidget);
     QListWidgetItem* item = new QListWidgetItem(this->ui->listWidget);
     connect(row, &RecordRowWidget::removeRecord, this, &MainWindow::removeRecord);
     this->ui->listWidget->addItem(item);
@@ -121,53 +167,57 @@ void MainWindow::addRecordWidget(int index) {
     this->ui->listWidget->setItemWidget(item, row);
 }
 
-void MainWindow::populateListWidget(QString search_name) {
+void MainWindow::populateListWidget(QString search_name, QByteArray &pin_key) {
     for (int i = 0; i < records.size(); i++)
-        if (records[i].recordName.toLower().contains(search_name.toLower())) {
-            addRecordWidget(i);
+        if (records[i].getDatas(pin_key).recordName.toLower().contains(search_name.toLower())) {
+            addRecordWidget(i, pin_key);
         }
+}
+
+void MainWindow::loadFieldsFromRecord(QByteArray &pin_key)
+{
+    if (ui->listWidget->currentItem() && WindowsManager::get()->AddW->isEditNow == true) {
+        QListWidgetItem *currentItem = ui->listWidget->currentItem();
+        QWidget *widget = ui->listWidget->itemWidget(currentItem);
+        Record record = *(static_cast<RecordRowWidget*>(widget)->getRecord());
+        WindowsManager::get()->AddW->edit(record, pin_key);
+        int index = records.indexOf(record);
+        if (index != -1) {
+            records.removeAt(index);
+        }
+        saveToFile(pin_key);
+    }
+}
+
+void MainWindow::checkAuth()
+{
+    this->setEnabled(false);
+    WindowsManager::get()->AuthW->ask_load_code();
+}
+
+void MainWindow::authComplete()
+{
+    this->setEnabled(true);
 }
 
 void MainWindow::on_pushButton_clicked()
 {
-    saveToFile();
-    QMessageBox mb;
-    mb.setText("Сохранено!");
-    mb.exec();
+    WindowsManager::get()->AuthW->ask_save_code();
 }
 
-void MainWindow::saveToFile() {
-    QFile file("records.json");
-    if (!file.open(QIODevice::WriteOnly)) {
-        qDebug() << file.errorString();
-        return;
-    }
-    QJsonObject data = this->toJson();
-    QByteArray unEncData = QJsonDocument(this->toJson()).toJson();
-    QByteArray encData;
-    int errorcode = encrypt_file(unEncData, encData);
-    if (errorcode) {
-        qDebug() << "Error when encrypting! Errorcode: " << errorcode;
-        return;
-    }
-    QByteArray hexEncData = encData.toHex();
-    file.write(hexEncData);
-    file.close();
-}
-
-QJsonObject MainWindow::toJson() {
+QJsonObject MainWindow::toJson(QByteArray& pin_key) {
     QJsonObject data;
     QJsonArray jsonRecords;
     for (int i = 0; i < records.size(); i++) {
-        QJsonObject jsonRecord = records[i].toJson();
+        QJsonObject jsonRecord = records[i].toJson(pin_key);
         jsonRecords.append(jsonRecord);
     }
     data["records"] = jsonRecords;
     return data;
 }
 
-int MainWindow::encrypt_file(const QByteArray& in, QByteArray& out) {
-    QByteArray key_qba = QByteArray::fromHex("ebbc302ee102a698092424f16221330da793ddc2ffb24ad0ff88cff7bc4e4324");
+int MainWindow::encrypt_file(const QByteArray& in, QByteArray& out, QByteArray& pin_key) {
+    QByteArray key_qba = pin_key;
     QByteArray iv_qba = QByteArray::fromHex("1be1e6411665696b56e284a50deb15bb");
     QDataStream decryptedStream(in);
     QDataStream encryptedStream(&out, QIODevice::ReadWrite);
@@ -205,19 +255,29 @@ int MainWindow::encrypt_file(const QByteArray& in, QByteArray& out) {
 void MainWindow::on_lineEdit_textEdited(const QString &text)
 {
     this->text_search = text;
-    resetView();
+    checkAuth();
 }
 
-void MainWindow::addRecord(Record rec)
+void MainWindow::addRecord(Record rec, QByteArray& pin_key)
 {
     records.append(rec);
-    resetView();
+    saveToFile(pin_key);
 }
 
 void MainWindow::on_pushButton_2_clicked()
 {
-    WindowsManager::get()->AddW->create();
     WindowsManager::get()->AddW->show();
 }
 
+void MainWindow::on_listWidget_itemClicked(QListWidgetItem *item)
+{
+    WindowsManager::get()->AddW->isEditNow = true;
+    WindowsManager::get()->AuthW->ask_load_code();
+}
+
+
+void MainWindow::on_reloadButton_clicked()
+{
+    WindowsManager::get()->AuthW->ask_load_code();
+}
 

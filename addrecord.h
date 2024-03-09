@@ -15,10 +15,11 @@ class AddRecord : public QDialog
 public:
     explicit AddRecord(QWidget *parent = nullptr);
     ~AddRecord();
-    void setData(Record *record);
     void accept();
     void create();
-    void edit();
+    void edit(Record& rec, QByteArray &pin_key);
+    void addRecord(QByteArray &pin_key);
+    bool isEditNow = false;
 private slots:
     void changeEchoMode(QWidget *oldFocus, QWidget *newFocus);
     void on_buttonBox_accepted();
@@ -27,7 +28,7 @@ private slots:
 
 private:
     bool makeNew;
-    Record *record;
+    decryptedDatas *record = nullptr;
     Ui::AddRecord *ui;
 };
 

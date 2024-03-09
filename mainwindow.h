@@ -7,6 +7,8 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QMessageBox>
+#include <QListWidgetItem>
+#include <QListWidget>
 #include <openssl/evp.h>
 
 #include "addrecord.h"
@@ -24,9 +26,17 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    void showWindow();
+    void addRecord(Record rec, QByteArray& pin_key);
 
-    void addRecord(Record rec);
+    bool tryDecrypt(QByteArray &pin_key);
+
+    void saveToFile(QByteArray& pin_key);
+
+    void checkAuth();
+
+    void authComplete();
+
+    void loadFieldsFromRecord(QByteArray &pin_key);
 
 private slots:
     void removeRecord(Record* record);
@@ -37,28 +47,30 @@ private slots:
 
     void on_pushButton_2_clicked();
 
+    void on_listWidget_itemClicked(QListWidgetItem *item);
+
+    void on_reloadButton_clicked();
+
 private:
     QVector<Record> records;
 
-    void fromJson(QJsonObject json);
+    bool fromJson(QJsonObject json, QByteArray &pin_key);
 
-    void readFile();
+    bool readFile(QByteArray &pin_key);
 
-    void resetView();
+    void resetView(QByteArray &pin_key);
 
-    int decrypt_file(const QByteArray& in, QByteArray& out);
+    int decrypt_file(const QByteArray& in, QByteArray& out, QByteArray &pin_key);
 
-    void addRecordWidget(int index);
+    void addRecordWidget(int index, QByteArray &pin_key);
 
-    void populateListWidget(QString search_name);
-
-    void saveToFile();
+    void populateListWidget(QString search_name, QByteArray &pin_key);
 
     QString text_search;
 
-    QJsonObject toJson();
+    QJsonObject toJson(QByteArray &pin_key);
 
-    int encrypt_file(const QByteArray& in, QByteArray& out);
+    int encrypt_file(const QByteArray& in, QByteArray& out, QByteArray& pin_key);
 
     Ui::MainWindow *ui;
 };

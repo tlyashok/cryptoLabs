@@ -15,12 +15,16 @@ class AuthWindow : public QWidget
 
 public:
     explicit AuthWindow(QWidget *parent = nullptr);
-    void hide_window();
+    void ask_save_code();
+    void ask_load_code();
     ~AuthWindow();
 
 private slots:
     void on_joinButton_clicked();
 
+    void on_saveButton_clicked();
+
+    void hide_window();
 private:
     Ui::AuthWindow *ui;
 };

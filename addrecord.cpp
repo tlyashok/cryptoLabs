@@ -27,34 +27,31 @@ AddRecord::~AddRecord() {
     delete ui;
 }
 
-void AddRecord::setData(Record *record) {
-    this->record = record;
-    ui->recordNameLineEdit->setText(record->recordName);
-    ui->userNameLineEdit->setText(record->userName);
-    ui->passwordLineEdit->setText(record->password);
-}
-
 void AddRecord::accept() {
     this->hide();
-    record->recordName = ui->recordNameLineEdit->text();
-    record->userName = ui->userNameLineEdit->text();
-    record->password= ui->passwordLineEdit->text();
+    this->record = new decryptedDatas(
+        ui->recordNameLineEdit->text().toUtf8(),
+        ui->userNameLineEdit->text().toUtf8(),
+        ui->passwordLineEdit->text().toUtf8()
+    );
     ui->recordNameLineEdit->setText("");
     ui->userNameLineEdit->setText("");
     ui->passwordLineEdit->setText("");
-    if (makeNew)
-        WindowsManager::get()->MainW->addRecord(*(this->record));
+    WindowsManager::get()->AuthW->ask_load_code();
 }
 
 void AddRecord::create()
 {
-    this->record = new Record();
-    makeNew = true;
+
 }
 
-void AddRecord::edit()
+void AddRecord::edit(Record& rec, QByteArray &pin_key)
 {
-
+    if (isEditNow) {
+        ui->recordNameLineEdit->setText(rec.getDatas(pin_key).recordName);
+        ui->userNameLineEdit->setText(rec.getDatas(pin_key).userName);
+        ui->passwordLineEdit->setText(rec.getDatas(pin_key).password);
+    }
 }
 
 void AddRecord::on_buttonBox_rejected()
@@ -63,5 +60,23 @@ void AddRecord::on_buttonBox_rejected()
     ui->recordNameLineEdit->setText("");
     ui->userNameLineEdit->setText("");
     ui->passwordLineEdit->setText("");
+}
+
+void AddRecord::addRecord(QByteArray &pin_key)
+{
+     if (record == nullptr) {
+        WindowsManager::get()->MainW->loadFieldsFromRecord(pin_key);
+        return;
+    }
+    Record *encrypted_record = new Record(
+        record->recordName,
+        record->userName,
+        record->password,
+        pin_key
+    );
+    WindowsManager::get()->MainW->addRecord(*encrypted_record, pin_key);
+    record = nullptr;
+    delete encrypted_record;
+
 }
 
