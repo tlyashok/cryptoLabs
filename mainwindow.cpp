@@ -23,6 +23,13 @@ bool MainWindow::tryDecrypt(QByteArray &pin_key)
     if (!readFile(pin_key)) {
         return false;
     } else {
+        for (int i = 0; i < records.length(); i++) {
+            QString s;
+            s += records[i].recordName + " ";
+            s += records[i].userName + " ";
+            s += records[i].password + " ";
+            qDebug() << s;
+        }
         WindowsManager::get()->AddW->addRecord(pin_key);
         if (WindowsManager::get()->AddW->isEditNow == false) {
             resetView(pin_key);
@@ -84,9 +91,9 @@ bool MainWindow::fromJson(QJsonObject json, QByteArray &pin_key) {
     QJsonArray jsonRecords = json["records"].toArray();
     for (int i = 0; i < jsonRecords.size(); i++) {
         Record r(
-            jsonRecords[i].toObject()["recordName"].toString().toUtf8(),
-            jsonRecords[i].toObject()["userName"].toString().toUtf8(),
-            jsonRecords[i].toObject()["password"].toString().toUtf8(),
+            QByteArray::fromHex(jsonRecords[i].toObject()["recordName"].toString().toUtf8()),
+            QByteArray::fromHex(jsonRecords[i].toObject()["userName"].toString().toUtf8()),
+            QByteArray::fromHex(jsonRecords[i].toObject()["password"].toString().toUtf8()),
             pin_key
         );
         records.append(r);

@@ -13,24 +13,16 @@ Record::Record(QString recordName, QString userName, QString password, QByteArra
 }
 
 Record::Record(QByteArray recordName, QByteArray userName, QByteArray password, QByteArray& pin_key) {
-    QByteArray recordNameEncrypted, userNameEncrypted, passwordEncrypted;
-    encrypt_file(recordName, recordNameEncrypted , pin_key);
-    encrypt_file(userName, userNameEncrypted, pin_key);
-    encrypt_file(password, passwordEncrypted, pin_key);
-    this->recordName = recordNameEncrypted;
-    this->userName = userNameEncrypted;
-    this->password = passwordEncrypted;
+    this->recordName = recordName;
+    this->userName = userName;
+    this->password = password;
 }
 
 QJsonObject Record::toJson(QByteArray& pin_key) {
-    QByteArray recordNameDecrypted, userNameDecrypted, passwordDecrypted;
-    decrypt_file(recordName, recordNameDecrypted, pin_key);
-    decrypt_file(userName, userNameDecrypted, pin_key);
-    decrypt_file(password, passwordDecrypted, pin_key);
     QJsonObject result {
-        {"recordName", QString(recordNameDecrypted)},
-        {"userName",  QString(userNameDecrypted)},
-        {"password", QString(passwordDecrypted)},
+        {"recordName", QString(this->recordName.toHex())},
+        {"userName",  QString(this->userName.toHex())},
+        {"password", QString(this->password.toHex())},
    };
     return result;
 }
@@ -155,9 +147,9 @@ int decryptedDatas::decrypt_file(const QByteArray& in, QByteArray& out, QByteArr
 decryptedDatas::decryptedDatas(const QByteArray& recordName, const QByteArray& userName, const QByteArray& password, QByteArray& pin_key)
 {
     QByteArray recordNameDecrypted, userNameDecrypted, passwordDecrypted;
-    qDebug() << decrypt_file(recordName, recordNameDecrypted, pin_key) << " " << 9999;
-    qDebug() << decrypt_file(userName, userNameDecrypted, pin_key) << " " << 9999;
-    qDebug() << decrypt_file(password, passwordDecrypted, pin_key) << " " << 9999;
+    decrypt_file(recordName, recordNameDecrypted, pin_key);
+    decrypt_file(userName, userNameDecrypted, pin_key);
+    decrypt_file(password, passwordDecrypted, pin_key);
 
     this->recordName = QString::fromUtf8(recordNameDecrypted);
     this->userName = QString::fromUtf8(userNameDecrypted);
